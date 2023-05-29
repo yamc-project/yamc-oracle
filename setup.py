@@ -20,22 +20,13 @@ def read(*parts):
         return fobj.read()
 
 
-# finds the version of the package
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
-
-
 # setup main
 # required modules
-install_requires = ["yamc-server>=1.0.2", "dms-collector>=2.0.1", "cx-Oracle==8.3.0"]
+install_requires = ["yamc-server>=1.0.2", "dms-collector>=2.0.1", "cx-Oracle==8.3.0", "setuptools_scm>=6.0.1"]
 
 setup(
     name="yamc-oracle",
-    version=find_version("yamc_oracle", "__init__.py"),
+    use_scm_version={"root": ".", "relative_to": __file__, "local_scheme": "node-and-timestamp"},
     description="Oracle providers for yamc",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
