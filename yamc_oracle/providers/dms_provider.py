@@ -5,7 +5,7 @@ import time
 
 import dms_collector
 from dms_collector import DmsCollector
-from yamc.providers import PerformanceProvider
+from yamc.providers import PerformanceProvider, perf_checker
 
 from yamc.utils import Map, perf_counter
 
@@ -43,6 +43,7 @@ class DmsProvider(PerformanceProvider):
             )
             self.connect_time = time.time()
 
+    @perf_checker
     def table(self, table, include=[], exclude=[], filter=None):
         self.init_dms()
         d = self.dms.collect(table, include=include, exclude=exclude, filter=filter)

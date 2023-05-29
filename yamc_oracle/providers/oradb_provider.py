@@ -7,7 +7,7 @@ import os
 
 import oracledb
 
-from yamc.providers import PerformanceProvider
+from yamc.providers import PerformanceProvider, perf_checker
 from yamc.utils import Map
 
 
@@ -66,6 +66,7 @@ class OraDBProvider(PerformanceProvider):
             self.cache[sql_file] = "".join(lines)
         return self.cache[sql_file]
 
+    @perf_checker
     def sql(self, sql_file, variables=[]):
         statement = self.load_statement(sql_file)
         self.open()
@@ -84,7 +85,7 @@ class OraDBProvider(PerformanceProvider):
             self.update_perf(os.path.basename(sql_file), len(data), running_time)
             self.log.info(
                 f"The result of the statement {os.path.basename(sql_file)} has {len(data)} rows and was retrieved "
-                + f"in {time.time()-query_time:0.04f} seconds."
+                + f"in {running_time:0.04f} seconds."
             )
             return data
         finally:
