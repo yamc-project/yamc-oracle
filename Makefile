@@ -3,7 +3,7 @@
 
 help:
 	@echo "make <target>"
-	@echo "build	build yamc-mqtt."
+	@echo "build	build yamc-oracle."
 	@echo "clean	clean all temporary directories."
 	@echo ""
 
