@@ -3,6 +3,7 @@
 
 import time
 
+import dms_collector
 from dms_collector import DmsCollector
 from yamc.providers import PerformanceProvider
 
@@ -25,6 +26,12 @@ class DmsProvider(PerformanceProvider):
         self.username = self.config.value_str("username", required=True)
         self.password = self.config.value_str("password", required=True)
         self.reconnect_after = self.config.value_int("reconnect_after", default=3600)
+
+        # set timeouts for the dms collector
+        dms_collector.dms.TIMEOUT_READ = self.config.value_int("timeout_read", default=dms_collector.dms.TIMEOUT_READ)
+        dms_collector.dms.TIMEOUT_CONNECT = self.config.value_int(
+            "timeout_connect", default=dms_collector.dms.TIMEOUT_CONNECT
+        )
 
     def init_dms(self):
         if self.dms is None or time.time() - self.connect_time > self.reconnect_after:
