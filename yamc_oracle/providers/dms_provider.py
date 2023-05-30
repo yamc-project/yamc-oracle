@@ -28,18 +28,23 @@ class DmsProvider(PerformanceProvider):
         self.reconnect_after = self.config.value_int("reconnect_after", default=3600)
 
         # set timeouts for the dms collector
-        dms_collector.dms.TIMEOUT_READ = self.config.value_int("timeout_read", default=dms_collector.dms.TIMEOUT_READ)
-        dms_collector.dms.TIMEOUT_CONNECT = self.config.value_int(
-            "timeout_connect", default=dms_collector.dms.TIMEOUT_CONNECT
-        )
+        self.read_timeout = self.config.value_int("timeout_read", default=dms_collector.dms.TIMEOUT_READ)
+        self.connect_timeout = self.config.value_int("timeout_connect", default=dms_collector.dms.TIMEOUT_CONNECT)
 
     def init_dms(self):
         if self.dms is None or time.time() - self.connect_time > self.reconnect_after:
             if self.dms is not None:
                 self.log.info("Reconnecting to DMS Spy after %d seconds." % self.reconnect_after)
-            self.dms = DmsCollector(self.admin_url, username=self.username, password=self.password)
+            self.dms = DmsCollector(
+                self.admin_url,
+                username=self.username,
+                password=self.password,
+                read_timeout=self.read_timeout,
+                connect_timeout=self.connect_timeout,
+            )
             self.log.info(
-                "DMS provider initialized: url=%s, username=%s, password=(secret)" % (self.admin_url, self.username)
+                "DMS provider initialized: url=%s, username=%s, password=(secret), read-timeout=%d, connect-timeout=%d"
+                % (self.admin_url, self.username, self.read_timeout, self.connect_timeout)
             )
             self.connect_time = time.time()
 
