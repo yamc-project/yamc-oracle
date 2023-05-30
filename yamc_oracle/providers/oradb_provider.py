@@ -36,13 +36,16 @@ class OraDBProvider(PerformanceProvider):
         self.connstr = self.config.value_str("connstr", required=True)
         self.reconnect_after = self.config.value_int("reconnect_after", required=False, default=3600)
         self.sql_files_dir = self.config.get_dir_path(self.config.value_str("sql_files_dir", required=True), check=True)
+        self.connect_timeout = self.config.value_int("connect_timeout", default=10)
 
     def open(self):
         if self.connection is None or time.time() - self.connect_time > self.reconnect_after:
             if self.connection is not None:
                 self.close()
-            self.log.info(f"Opening the DB connection, connstr={hide_password(self.connstr)}")
-            self.connection = oracledb.connect(self.connstr)
+            self.log.info(
+                f"Opening the DB connection, connstr={hide_password(self.connstr)}, connect_timeout={self.connect_timeout}"
+            )
+            self.connection = oracledb.connect(self.connstr, tcp_connect_timeout=self.connect_timeout)
             self.connect_time = time.time()
 
     def close(self):
