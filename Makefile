@@ -9,6 +9,7 @@ help:
 
 build:
 	python setup.py bdist_wheel	
+	rm -fr build
 
 clean:
 	rm -fr dist
