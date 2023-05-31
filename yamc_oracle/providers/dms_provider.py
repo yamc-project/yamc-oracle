@@ -5,7 +5,7 @@ import time
 
 import dms_collector
 from dms_collector import DmsCollector
-from yamc.providers import PerformanceProvider, perf_checker
+from yamc.providers import PerformanceProvider, perf_checker, OperationalError
 
 from yamc.utils import Map, perf_counter
 
@@ -48,16 +48,18 @@ class DmsProvider(PerformanceProvider):
             )
             self.connect_time = time.time()
 
-    @perf_checker
+    @perf_checker(id_arg="table")
     def table(self, table, include=[], exclude=[], filter=None):
-        self.init_dms()
-        d = self.dms.collect(table, include=include, exclude=exclude, filter=filter)
+        try:
+            self.init_dms()
+            d = self.dms.collect(table, include=include, exclude=exclude, filter=filter)
 
-        def _add_time(x):
-            x["time"] = d["time"]
-            return x
+            def _add_time(x):
+                x["time"] = d["time"]
+                return x
 
-        data = list(map(_add_time, d["data"]))
-        self.update_perf(table, len(data), d["query_time"])
-        self.log.info(f"The DMS retrieved {len(data)} records in {d['query_time']:0.4f} seconds from '{table}'.")
-        return data
+            data = list(map(_add_time, d["data"]))
+            self.log.info(f"The DMS retrieved {len(data)} records in {d['query_time']:0.4f} seconds from '{table}'.")
+            return data
+        except Exception as e:
+            raise OperationalError(f"Error while retrieving data from DMS: {e}")

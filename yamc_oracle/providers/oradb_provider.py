@@ -7,7 +7,7 @@ import os
 
 import oracledb
 
-from yamc.providers import PerformanceProvider, perf_checker
+from yamc.providers import PerformanceProvider, perf_checker, OperationalError
 from yamc.utils import Map
 
 
@@ -27,7 +27,6 @@ def hide_password(connstr):
 class OraDBProvider(PerformanceProvider):
     def __init__(self, config, component_id):
         super().__init__(config, component_id)
-
         self.connection = None
         self.connect_time = None
         self.cache = Map()
@@ -69,27 +68,29 @@ class OraDBProvider(PerformanceProvider):
             self.cache[sql_file] = "".join(lines)
         return self.cache[sql_file]
 
-    @perf_checker
+    @perf_checker(id_arg="sql_file")
     def sql(self, sql_file, variables=[]):
-        statement = self.load_statement(sql_file)
-        self.open()
-        self.log.debug("Running the SQL statement: %s" % re.sub("\s+", " ", statement))
-        cursor = self.connection.cursor()
         try:
-            query_time = time.time()
-            cursor.execute(statement, variables)
-            cursor.rowfactory = makeDictFactory(cursor)
-            data = []
-            for row in cursor:
-                row["time"] = query_time
-                data.append(row)
-            running_time = time.time() - query_time
+            statement = self.load_statement(sql_file)
+            self.open()
+            self.log.debug("Running the SQL statement: %s" % re.sub("\s+", " ", statement))
+            cursor = self.connection.cursor()
+            try:
+                query_time = time.time()
+                cursor.execute(statement, variables)
+                cursor.rowfactory = makeDictFactory(cursor)
+                data = []
+                for row in cursor:
+                    row["time"] = query_time
+                    data.append(row)
+                running_time = time.time() - query_time
 
-            self.update_perf(os.path.basename(sql_file), len(data), running_time)
-            self.log.info(
-                f"The result of the statement {os.path.basename(sql_file)} has {len(data)} rows and was retrieved "
-                + f"in {running_time:0.04f} seconds."
-            )
-            return data
-        finally:
-            cursor.close()
+                self.log.info(
+                    f"The result of the statement {os.path.basename(sql_file)} has {len(data)} rows and was retrieved "
+                    + f"in {running_time:0.04f} seconds."
+                )
+                return data
+            finally:
+                cursor.close()
+        except Exception as e:
+            raise OperationalError(f"Error while executing the SQL statement '{sql_file}': {e}")
