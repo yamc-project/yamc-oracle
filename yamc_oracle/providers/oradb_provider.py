@@ -84,7 +84,7 @@ class OraDBProvider(PerformanceProvider):
         self.cache = Map()
 
     @perf_checker(id_arg="sql_file")
-    def sql(self, sql_file: str, variables: List[str] = [], types: Dict[str, Type] = {}):
+    def sql(self, sql_file: str, variables: List[str] = [], types: Dict[str, Type] = None):
         try:
             item = self.open(sql_file)
             with item.lock:
@@ -96,8 +96,6 @@ class OraDBProvider(PerformanceProvider):
                     cursor.rowfactory = makeDictFactory(cursor)
                     data = []
                     for row in cursor:
-                        if "time" not in row:
-                            row["time"] = query_time
                         if types is not None and len(types) > 0:
                             for k, v in types.items():
                                 if k in row.keys():
