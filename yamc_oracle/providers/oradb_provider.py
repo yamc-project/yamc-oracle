@@ -15,6 +15,9 @@ from typing import Dict, List, Type
 
 
 def makeDictFactory(cursor):
+    """
+    Create a dictionary from the cursor description.
+    """
     columnNames = [d[0].lower() for d in cursor.description]
 
     def createRow(*args):
@@ -24,11 +27,21 @@ def makeDictFactory(cursor):
 
 
 def hide_password(connstr):
+    """
+    Hide the password in the connection string.
+    """
     return re.sub("\/(.+)@", "/(secret)@", connstr)
 
 
 class OraDBProvider(PerformanceProvider):
+    """
+    Provider that executes SQL statements against an Oracle database.
+    """
+
     def __init__(self, config, component_id):
+        """
+        Initialize the provider.
+        """
         super().__init__(config, component_id)
         self.cache = Map()
 
@@ -42,6 +55,11 @@ class OraDBProvider(PerformanceProvider):
     def open(
         self, sql_file: str
     ) -> Map["fname":str, "connection":str, "connect_time":int, "statement":str, "lock" : threading.Lock]:
+        """
+        Open a connection to the database and return the connection object. The connections are cached based on the
+        SQL file name. If the connection is older than the reconnect_after parameter, it is closed and a new one is
+        opened.
+        """
         fname = os.path.realpath("%s/%s" % (self.sql_files_dir, sql_file))
         if not os.path.isfile(fname):
             raise Exception("The SQL file %s does not exist!" % fname)
@@ -75,6 +93,9 @@ class OraDBProvider(PerformanceProvider):
         return cache
 
     def destroy(self):
+        """
+        Close all connections to the database.
+        """
         super().destroy()
         for k, item in self.cache.items():
             if item.connection is not None:
@@ -85,6 +106,12 @@ class OraDBProvider(PerformanceProvider):
 
     @perf_checker(id_arg="sql_file")
     def sql(self, sql_file: str, variables: List[str] = [], types: Dict[str, Type] = None):
+        """
+        Execute the SQL statement in the file sql_file. The file is searched in the sql_files_dir directory.
+        The variables are passed to the SQL statement as parameters. The types parameter is a dictionary that
+        specifies the type of fields in the result set that can be used to explicltty convert the values to the
+        specified type.
+        """
         try:
             item = self.open(sql_file)
             with item.lock:
