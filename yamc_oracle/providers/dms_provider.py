@@ -53,11 +53,7 @@ class DmsProvider(PerformanceProvider):
         try:
             self.init_dms()
             d = self.dms.collect(table, include=include, exclude=exclude, filter=filter)
-
-            # def _add_time(x):
-            #     return x
-
-            data = d["data"]  # list(map(_add_time, d["data"]))
+            data = d["data"]
             self.log.info(f"The DMS retrieved {len(data)} records in {d['query_time']:0.4f} seconds from '{table}'.")
             return data
         except Exception as e:
