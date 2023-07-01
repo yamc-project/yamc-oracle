@@ -3,3 +3,4 @@
 
 from .dms_provider import DmsProvider
 from .oradb_provider import OraDBProvider
+from .spm_provider import SPMProvider

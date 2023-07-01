@@ -22,7 +22,13 @@ def read(*parts):
 
 # setup main
 # required modules
-install_requires = ["yamc-server>=2.0.5", "dms-collector>=2.0.4", "oracledb>=1.3.1", "setuptools_scm>=6.0.1"]
+install_requires = [
+    "yamc-server>=2.0.5",
+    "dms-collector>=2.0.4",
+    "oracledb>=1.3.1",
+    "setuptools_scm>=6.0.1",
+    "zeep>=4.2.1",
+]
 
 setup(
     name="yamc-oracle",
