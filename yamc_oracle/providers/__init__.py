@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from .dms_provider import DmsProvider
-from .oradb_provider import OraDBProvider
-from .spm_provider import SPMProvider
+from .dms import DmsProvider
+from .oradb import OraDBProvider
+from .spm import SPMProvider
