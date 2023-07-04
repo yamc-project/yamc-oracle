@@ -5,11 +5,9 @@ import time
 import datetime
 import re
 
-import dms_collector
-from dms_collector import DmsCollector
 from yamc.providers import PerformanceProvider, perf_checker, OperationalError
 
-from yamc.utils import Map, perf_counter, merge
+from yamc.utils import merge
 
 from zeep import Client
 from zeep.wsse.username import UsernameToken
