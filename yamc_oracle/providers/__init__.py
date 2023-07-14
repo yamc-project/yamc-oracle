@@ -4,3 +4,4 @@
 from .dms import DmsProvider
 from .oradb import OraDBProvider
 from .spm import SPMProvider
+from .wlsoutlog import WLSOutLogProvider
