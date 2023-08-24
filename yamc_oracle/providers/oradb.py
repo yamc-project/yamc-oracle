@@ -50,10 +50,11 @@ class OraDBProvider(PerformanceProvider):
         self.reconnect_after = self.config.value_int("reconnect_after", required=False, default=3600)
         self.sql_files_dir = self.config.get_dir_path(self.config.value_str("sql_files_dir", required=True), check=True)
         self.connect_timeout = self.config.value_int("connect_timeout", default=10)
+        self.call_timeout = self.config.value_int("call_timeout", default=None)
         self.max_connections = self.config.value_int("max_connections", default=10)
 
     def open(
-        self, sql_file: str
+        self, sql_file: str, call_timeout: int = None
     ) -> Map["fname":str, "connection":str, "connect_time":int, "statement":str, "lock" : threading.Lock]:
         """
         Open a connection to the database and return the connection object. The connections are cached based on the
@@ -89,6 +90,10 @@ class OraDBProvider(PerformanceProvider):
             if len([x for x in self.cache.values() if x.connection is not None]) - 1 > self.max_connections:
                 raise Exception("The maximum number of connections (%d) has been reached!" % self.max_connections)
             cache.connection = oracledb.connect(self.connstr, tcp_connect_timeout=self.connect_timeout)
+            if call_timeout is not None:
+                cache.connection.callTimeout = call_timeout
+            elif self.call_timeout is not None:
+                cache.connection.callTimeout = self.call_timeout
             cache.connect_time = time.time()
         return cache
 
@@ -105,7 +110,7 @@ class OraDBProvider(PerformanceProvider):
         self.cache = Map()
 
     @perf_checker(id_arg="sql_file")
-    def sql(self, sql_file: str, variables: List[str] = [], types: Dict[str, Type] = None):
+    def sql(self, sql_file: str, variables: List[str] = [], types: Dict[str, Type] = None, call_timeout: int = None):
         """
         Execute the SQL statement in the file sql_file. The file is searched in the sql_files_dir directory.
         The variables are passed to the SQL statement as parameters. The types parameter is a dictionary that
@@ -113,7 +118,7 @@ class OraDBProvider(PerformanceProvider):
         specified type.
         """
         try:
-            item = self.open(sql_file)
+            item = self.open(sql_file, call_timeout=call_timeout)
             with item.lock:
                 self.log.debug("Running the SQL statement: %s" % re.sub("\s+", " ", item.statement))
                 cursor = item.connection.cursor()
