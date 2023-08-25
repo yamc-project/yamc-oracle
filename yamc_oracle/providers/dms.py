@@ -57,4 +57,4 @@ class DmsProvider(PerformanceProvider):
             self.log.info(f"The DMS retrieved {len(data)} records in {d['query_time']:0.4f} seconds from '{table}'.")
             return data
         except Exception as e:
-            raise OperationalError(f"Error while retrieving data from DMS: {e}")
+            raise OperationalError(f"Error while retrieving data from DMS: {e}", e)

@@ -143,4 +143,4 @@ class OraDBProvider(PerformanceProvider):
                 finally:
                     cursor.close()
         except Exception as e:
-            raise OperationalError(f"Error while executing the SQL statement '{sql_file}': {e}")
+            raise OperationalError(f"Error while executing the SQL statement '{sql_file}': {e}", e)

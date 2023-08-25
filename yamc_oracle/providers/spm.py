@@ -165,4 +165,4 @@ class SPMProvider(PerformanceProvider):
             self.update(hostid=hostid)
             return self.data[hostid]
         except OperationalError as e:
-            raise OperationalError(f"Error occurred when retrieving SPM status: {e}")
+            raise OperationalError(f"Error occurred when retrieving SPM status: {e}", e)
