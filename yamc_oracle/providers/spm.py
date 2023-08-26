@@ -133,13 +133,14 @@ class SPMProvider(PerformanceProvider):
         self.token_blocked_time = self.config.value_int("token_blocked_time", default=400)
         self.wsdl = self.config.value_str("wsdl", required=True)
         self.read_timeout = self.config.value_int("read_timeout", default=30)
+        self.connect_timeout = self.config.value_int("connect_timeout", default=5)
         self.username = self.config.value_str("username", required=False)
         self.password = self.config.value_str("password", required=False)
 
     @property
     def client(self):
         if self._client is None:
-            transport = Transport(operation_timeout=self.read_timeout)
+            transport = Transport(timeout=self.connect_timeout, operation_timeout=self.read_timeout)
             if self.username is None or self.password is None:
                 self._client = Client(self.wsdl, transport=transport)
             else:
