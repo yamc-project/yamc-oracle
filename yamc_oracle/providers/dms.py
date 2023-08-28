@@ -31,6 +31,10 @@ class DmsProvider(PerformanceProvider):
         self.read_timeout = self.config.value_int("timeout_read", default=dms_collector.dms.TIMEOUT_READ)
         self.connect_timeout = self.config.value_int("timeout_connect", default=dms_collector.dms.TIMEOUT_CONNECT)
 
+    @property
+    def source(self):
+        return self.admin_url
+
     def init_dms(self):
         if self.dms is None or time.time() - self.connect_time > self.reconnect_after:
             if self.dms is not None:

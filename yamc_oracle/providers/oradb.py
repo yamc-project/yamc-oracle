@@ -53,6 +53,10 @@ class OraDBProvider(PerformanceProvider):
         self.call_timeout = self.config.value_int("call_timeout", default=None)
         self.max_connections = self.config.value_int("max_connections", default=10)
 
+    @property
+    def source(self):
+        return re.sub(r"/(\w+)@", "/*********@", self.connstr)
+
     def open(
         self, sql_file: str, call_timeout: int = None
     ) -> Map["fname":str, "connection":str, "connect_time":int, "statement":str, "lock" : threading.Lock]:

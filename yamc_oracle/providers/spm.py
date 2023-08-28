@@ -138,6 +138,10 @@ class SPMProvider(PerformanceProvider):
         self.password = self.config.value_str("password", required=False)
 
     @property
+    def source(self):
+        return self.wsdl
+
+    @property
     def client(self):
         if self._client is None:
             transport = Transport(timeout=self.connect_timeout, operation_timeout=self.read_timeout)
