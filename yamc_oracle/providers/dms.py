@@ -7,6 +7,8 @@ import dms_collector
 from dms_collector import DmsCollector
 from yamc.providers import PerformanceProvider, perf_checker, OperationalError
 
+from dms_collector import TableNotExistError, DataParserError
+
 from yamc.utils import Map, perf_counter
 
 
@@ -20,6 +22,7 @@ class DmsProvider(PerformanceProvider):
         super().__init__(config, component_id)
         self.connect_time = 0
         self.dms = None
+        self.force_reconnect = False
 
         # configuration
         self.admin_url = self.config.value_str("admin_url", required=True)
@@ -36,9 +39,17 @@ class DmsProvider(PerformanceProvider):
         return self.admin_url
 
     def init_dms(self):
-        if self.dms is None or time.time() - self.connect_time > self.reconnect_after:
+        if (
+            self.force_reconnect
+            or self.dms is None
+            or time.time() - self.connect_time > self.reconnect_after
+            or self.force_reconnect
+        ):
             if self.dms is not None:
                 self.log.info("Reconnecting to DMS Spy after %d seconds." % self.reconnect_after)
+            if self.force_reconnect:
+                self.log.info("Reconnecting to DMS Spy due to an error.")
+                self.force_reconnect = False
             self.dms = DmsCollector(
                 self.admin_url,
                 username=self.username,
@@ -60,5 +71,8 @@ class DmsProvider(PerformanceProvider):
             data = d["data"]
             self.log.info(f"The DMS retrieved {len(data)} records in {d['query_time']:0.4f} seconds from '{table}'.")
             return data
+        except (DataParserError, TableNotExistError) as e:
+            self.force_reconnect = True
+            raise OperationalError(f"Invalid data retrieved from DMS, will reconnect to DMS on the next run. {e}", e)
         except Exception as e:
             raise OperationalError(f"Error while retrieving data from DMS: {e}", e)
