@@ -53,8 +53,7 @@ class OraDBProvider(PerformanceProvider):
         self.call_timeout = self.config.value_int("call_timeout", default=None)
         self.max_connections = self.config.value_int("max_connections", default=10)
         self.log.info(
-            f"DB connection will use the following connection details: connstr={hide_password(self.connstr)}, "
-            + f"connect_timeout={self.connect_timeout}"
+            f"DB connection config: connstr={hide_password(self.connstr)}, " + f"connect_timeout={self.connect_timeout}"
         )
 
     @property

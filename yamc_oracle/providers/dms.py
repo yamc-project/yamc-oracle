@@ -31,8 +31,8 @@ class DmsProvider(PerformanceProvider):
         self.read_timeout = self.config.value_int("timeout_read", default=dms_collector.dms.TIMEOUT_READ)
         self.connect_timeout = self.config.value_int("timeout_connect", default=dms_collector.dms.TIMEOUT_CONNECT)
         self.log.info(
-            f"dms_collector will use the following connection details: url={self.admin_url}, username={self.username}, "
-            + f"password=******, reconnect_after={self.reconnect_after}, read_timeout={self.read_timeout}, "
+            f"dms_collector config: url={self.admin_url}, u/p={self.username}/*******, "
+            + f"reconnect_after={self.reconnect_after}, read_timeout={self.read_timeout}, "
             + f"connect_timeout={self.connect_timeout}"
         )
 
