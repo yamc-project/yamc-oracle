@@ -52,6 +52,10 @@ class OraDBProvider(PerformanceProvider):
         self.connect_timeout = self.config.value_int("connect_timeout", default=10)
         self.call_timeout = self.config.value_int("call_timeout", default=None)
         self.max_connections = self.config.value_int("max_connections", default=10)
+        self.log.info(
+            f"DB connection will use the following connection details: connstr={hide_password(self.connstr)}, "
+            + f"connect_timeout={self.connect_timeout}"
+        )
 
     @property
     def source(self):
@@ -59,38 +63,36 @@ class OraDBProvider(PerformanceProvider):
 
     def open(
         self, sql_file: str, call_timeout: int = None
-    ) -> Map["fname":str, "connection":str, "connect_time":int, "statement":str, "lock" : threading.Lock]:
+    ) -> Map["fname":str, "connection":str, "connect_time":int, "statement":str]:
         """
         Open a connection to the database and return the connection object. The connections are cached based on the
         SQL file name. If the connection is older than the reconnect_after parameter, it is closed and a new one is
         opened.
         """
         fname = os.path.realpath("%s/%s" % (self.sql_files_dir, sql_file))
+        conn_id = str(threading.get_native_id) + "/" + fname
         if not os.path.isfile(fname):
             raise Exception("The SQL file %s does not exist!" % fname)
 
-        if self.cache.get(fname) is None:
+        if self.cache.get(conn_id) is None:
             cache = Map(
                 fname=fname,
                 connection=None,
                 connect_time=None,
                 statement=None,
-                lock=threading.Lock(),
             )
             lines = []
             with open(fname, "r") as file:
                 lines = [x for x in file]
             cache.statement = "".join(lines)
-            self.cache[fname] = cache
+            self.cache[conn_id] = cache
 
-        cache = self.cache.get(fname)
+        cache = self.cache.get(conn_id)
         if cache.connection is None or time.time() - cache.connect_time > self.reconnect_after:
             if cache.connection is not None:
                 cache.connection.close()
                 cache.connection = None
-            self.log.info(
-                f"Opening the DB connection, connstr={hide_password(self.connstr)}, connect_timeout={self.connect_timeout}"
-            )
+            self.log.info(f"DB connection created: id={conn_id}")
             if len([x for x in self.cache.values() if x.connection is not None]) - 1 > self.max_connections:
                 raise Exception("The maximum number of connections (%d) has been reached!" % self.max_connections)
             cache.connection = oracledb.connect(self.connstr, tcp_connect_timeout=self.connect_timeout)
@@ -119,32 +121,33 @@ class OraDBProvider(PerformanceProvider):
         Execute the SQL statement in the file sql_file. The file is searched in the sql_files_dir directory.
         The variables are passed to the SQL statement as parameters. The types parameter is a dictionary that
         specifies the type of fields in the result set that can be used to explicltty convert the values to the
-        specified type.
+        specified type. The function is thread-safe, i.e., it can be called from multiple threads. When the same sql_file
+        is called from multiple threads, the function will open a new connection for each thread.
         """
         try:
             item = self.open(sql_file, call_timeout=call_timeout)
-            with item.lock:
-                self.log.debug("Running the SQL statement: %s" % re.sub("\s+", " ", item.statement))
-                cursor = item.connection.cursor()
-                try:
-                    query_time = time.time()
-                    cursor.execute(item.statement, variables)
-                    cursor.rowfactory = makeDictFactory(cursor)
-                    data = []
-                    for row in cursor:
-                        if types is not None and len(types) > 0:
-                            for k, v in types.items():
-                                if k in row.keys():
-                                    row[k] = v(row[k])
-                        data.append(row)
-                    running_time = time.time() - query_time
+            self.log.debug("Running the SQL statement: %s" % re.sub("\s+", " ", item.statement))
+            cursor = item.connection.cursor()
+            try:
+                query_time = time.time()
+                cursor.execute(item.statement, variables)
+                cursor.rowfactory = makeDictFactory(cursor)
+                data = []
+                for row in cursor:
+                    if types is not None and len(types) > 0:
+                        for k, v in types.items():
+                            if k in row.keys():
+                                row[k] = v(row[k])
+                    data.append(row)
+                running_time = time.time() - query_time
 
-                    self.log.info(
-                        f"The result of the statement {os.path.basename(sql_file)} has {len(data)} rows and was retrieved "
-                        + f"in {running_time:0.04f} seconds."
-                    )
-                    return data
-                finally:
-                    cursor.close()
+                self.log.info(
+                    f"The result of the statement {os.path.basename(sql_file)} has {len(data)} rows and was retrieved "
+                    + f"in {running_time:0.04f} seconds."
+                )
+                return data
+            finally:
+                cursor.close()
         except Exception as e:
-            raise OperationalError(f"Error while executing the SQL statement '{sql_file}': {e}", e)
+            sql_error = str(e).replace("\n", " ")
+            raise OperationalError(f"Error while executing the SQL statement '{sql_file}': {sql_error}", e)
