@@ -69,7 +69,7 @@ class OraDBProvider(PerformanceProvider):
         opened.
         """
         fname = os.path.realpath("%s/%s" % (self.sql_files_dir, sql_file))
-        conn_id = str(threading.get_native_id) + "/" + fname
+        conn_id = str(threading.get_native_id()) + "/" + fname
         if not os.path.isfile(fname):
             raise Exception("The SQL file %s does not exist!" % fname)
 
