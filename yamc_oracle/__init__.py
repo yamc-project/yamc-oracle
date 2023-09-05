@@ -4,7 +4,7 @@
 from .providers import DmsProvider
 from .providers import OraDBProvider
 from .providers import SPMProvider
-from .providers import WLSOutLogProvider
+from .providers import SOAOutLogProvider
 
 from importlib.metadata import version, PackageNotFoundError
 
