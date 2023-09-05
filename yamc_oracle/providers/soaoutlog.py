@@ -167,8 +167,9 @@ class SOAOutLogProvider(PerformanceProvider):
             _now = self.time()
             time_from = round_time_minutes(_now - datetime.timedelta(minutes=time_delta), time_delta)
             time_to = round_time_minutes(_now, time_delta)
-            self.log.debug("Reading data from %s to %s", time_from, time_to)
-            self.log.debug("Reading started, there are %s groups in the buffer.", len(self.groups))
+            self.log.debug(
+                "Reading data from %s to %s. There are %s groups in the buffer.", time_from, time_to, len(self.groups)
+            )
 
             for g in self.groups:
                 g.modified = False
@@ -187,10 +188,10 @@ class SOAOutLogProvider(PerformanceProvider):
             finally:
                 self.reader.close()
 
-            self.log.debug("Reading finished, there are %s groups in the buffer.", len(self.groups))
+            self.log.debug("Reading finished. There are %s groups in the buffer.", len(self.groups))
 
             time_emit = round_time_minutes(_now - datetime.timedelta(minutes=self.buffer_minutes), time_delta)
-            self.log.debug("Creating groups to emit, the emit time is %s", time_emit)
+            self.log.debug("Creating groups to emit. The emit time is %s", time_emit)
             self.data = []
             for g in self.groups:
                 if g.time < time_emit:
