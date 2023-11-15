@@ -28,6 +28,7 @@ install_requires = [
     "oracledb>=1.3.1",
     "setuptools_scm>=6.0.1",
     "zeep>=4.2.1",
+    "wls-analytics>=0.4.1",
 ]
 
 setup(
