@@ -47,7 +47,6 @@ class LogProvider(PerformanceProvider):
         self.lock = threading.Lock()
 
         data_file = self.config.value_str("flows_dict", required=False, default=None)
-        print(data_file)
         if data_file:
             self.read_flows_dict(data_file)
 
