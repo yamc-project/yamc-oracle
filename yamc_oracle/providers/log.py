@@ -38,6 +38,7 @@ class LogProvider(PerformanceProvider):
         self.wlsa_readerclass = import_class(self.wlsa_config(f"sets.{self.wlsa_set}.reader", required=True))
         self.wlsa_reader = self.wlsa_readerclass(self.logfile, self.datetime_format)
         self.wlsa_labelparser = LabelParser(self.wlsa_config("parsers"), [self.wlsa_set])
+        self.entry_types = [x.upper() for x in self.config.value("entry_types", default=["error"])]
 
         self.buffer_minutes = self.config.value("buffer_minutes", default=2)
         self.simulated_time = self.config.value("simulated_time.start", default=None)
@@ -46,6 +47,7 @@ class LogProvider(PerformanceProvider):
         self._time = None
         self.lock = threading.Lock()
 
+        self.flows_dict = None
         data_file = self.config.value_str("flows_dict", required=False, default=None)
         if data_file:
             self.read_flows_dict(data_file)
@@ -96,6 +98,8 @@ class LogProvider(PerformanceProvider):
             self.wlsa_reader.open()
             try:
                 for entry in self.wlsa_reader.read_entries(time_from=time_from, time_to=time_to):
+                    if entry.type.upper() not in self.entry_types:
+                        continue
                     d = entry.to_dict(self.wlsa_labelparser)
                     for k, v in d.items():
                         if isinstance(v, str):
